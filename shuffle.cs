@@ -1,12 +1,10 @@
-function shuffleDeck(%this) {
-  %deck = %this.deck;
-  
-  %newDeck = getEmptyDeck();
+function shuffleDeck(%deck) {
   for (%i = 0; %i < %deck.numCards;) {
     %id = getRandom(%deck.numCards - 1);
     %card = %deck.removeCard(%deck.cards, %id);
-    %newDeck.addCard(%card);
+    %shuffled = %shuffled SPC %card;
+    %count++;
   }
-  %deck.delete();
-  %this.deck = %newDeck;
+  %deck.cards = trim(%shuffled);
+  %deck.numCards = %count;
 }

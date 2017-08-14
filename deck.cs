@@ -15,6 +15,11 @@ function getNewDeck() {
   };
 }
 
+function getShuffledDeck() {
+  %deck = getNewDeck().shuffle();
+  return %deck
+}
+
 function DeckSO::addCard(%this, %card) {
   %this.cards = trim(%this.cards SPC %card);
   %this.numCards++;
@@ -29,6 +34,17 @@ function DeckSO::removeCard(%this, %idx) {
 
 function DeckSO::getCard(%this, %idx) {
   return getWord(%this.cards, %idx);
+}
+
+function DeckSO::shuffleDeck(%deck) {
+  for (%i = 0; %i < %deck.numCards;) {
+    %id = getRandom(%deck.numCards - 1);
+    %card = %deck.removeCard(%deck.cards, %id);
+    %shuffled = %shuffled SPC %card;
+    %count++;
+  }
+  %deck.cards = trim(%shuffled);
+  %deck.numCards = %count;
 }
 
 function getCardName(%num) {
