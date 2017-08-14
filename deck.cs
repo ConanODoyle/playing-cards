@@ -20,12 +20,29 @@ function getShuffledDeck() {
 	return %deck;
 }
 
+
+////////////////////
+
+
 function DeckSO::addCard(%this, %card) {
+	if (%card $= "") {
+		error("Cannot add card: no card value!");
+		return;
+	}
+
 	%this.cards = trim(%this.cards SPC %card);
 	%this.numCards++;
 }
 
 function DeckSO::removeCard(%this, %idx) {
+	if (%this.numCards <= 0 || getWordcount(%this.cards)) {
+		error("Cannot remove card: No cards to remove!");
+		return;
+	} else if (%idx < 0 ||  %idx >= %this.numCards) {
+		error("Cannot remove card: Index out of range!");
+		return;
+	}
+
 	%ret = getWord(%this.cards, %idx);
 	%this.cards = removeWord(%this, %idx);
 	%this.numCards--;
@@ -34,6 +51,11 @@ function DeckSO::removeCard(%this, %idx) {
 
 function DeckSO::getCard(%this, %idx) {
 	return getWord(%this.cards, %idx);
+}
+
+function DeckSO::clearCards(%this)  {
+	%this.cards = "";
+	%this.numCards = 0;
 }
 
 function DeckSO::shuffleDeck(%deck) {
@@ -46,6 +68,10 @@ function DeckSO::shuffleDeck(%deck) {
 	%deck.cards = trim(%shuffled);
 	%deck.numCards = %count;
 }
+
+
+////////////////////
+
 
 function getCardName(%num) {
 	switch (%num / 13) {

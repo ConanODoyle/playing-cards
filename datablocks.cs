@@ -85,3 +85,16 @@ datablock PlayerData(CardHolderArmor : PlayerStandardArmor) {
 
 	keepWhenDead = 1;
 };
+
+function cardDisplay(%pl, %card) {
+	if (%pl.getDatablock().getID() != CardArmor.getID()) {
+		return;
+	}
+
+	%pl.hideNode("ALL");
+	%pl.setNodeColor("ALL", "1 1 1 1");
+
+	%pl.unHideNode("cardBack");
+	%pl.unHideNode("card");
+	%pl.unHideNode(%card);
+}

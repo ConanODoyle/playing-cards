@@ -5,3 +5,14 @@ function getIntList(%start, %end) {
 	}
 	return trim(%ret);
 }
+
+function getWordIndex(%str, %word) {
+	%ret = -1;
+	for (%i = 0; %i < getWordCount(%str); %i++) {
+		if (getWord(%str, %i) $= %word) {
+			%ret = %i;
+			break;
+		}
+	}
+	return %ret;
+}
