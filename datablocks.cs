@@ -86,6 +86,14 @@ datablock PlayerData(CardHolderArmor : PlayerStandardArmor) {
 	keepWhenDead = 1;
 };
 
+datablock StaticShapeData(CardShape) {
+	shapeFile = "./cards.dts";
+};
+
+datablock ShapeBaseImageData(CardsOutImage) {
+	shapeFile = "base/data/shapes/empty.dts";
+};
+
 function cardDisplay(%pl, %card) {
 	if (%pl.getDatablock().getID() != CardArmor.getID()) {
 		return;

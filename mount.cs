@@ -1,8 +1,8 @@
 package RemoveDecksOnDeath {
-	function Armor::onDisabled(%this, %obj, %state) {
+	function Armor::onRemove(%this, %obj) {
 		%obj.clearCardData();
 
-		return parent::onDisabled(%this, %obj, %state);
+		return parent::onRemove(%this, %obj);
 	}
 };
 activatePackage(RemoveDecksOnDeath);
@@ -16,6 +16,7 @@ function Player::addCard(%this, %card) {
 		%this.deck = getEmptyDeck();
 	} else if (%this.deck.numCards >= 13) {
 		error("Cannot add card to player hand: hand is full!");
+		$LastCard = %card;
 		return;
 	}
 
@@ -25,10 +26,10 @@ function Player::addCard(%this, %card) {
 function Player::removeCardIndex(%this, %idx) {
 	if (!isObject(%this.deck)) {
 		%this.deck = getEmptyDeck();
-		return;
+		return -1;
 	}
 
-	%this.deck.removeCardIndex(%idx);
+	return %this.deck.removeCard(%idx);
 }
 
 function Player::removeCard(%this, %card) {
@@ -42,7 +43,7 @@ function Player::removeCard(%this, %card) {
 	if (%idx >= 0) {
 		return %this.deck.removeCardIndex(%idx);
 	} else {
-		return "";
+		return -1;
 	}
 }
 
@@ -69,6 +70,8 @@ function Player::clearCardData(%this) {
 function Player::displayCards(%this) {
 	%deck = %this.deck;
 
+	%this.isCardsVisible = 1;
+
 	//cardholder
 	if (!isObject(%this.cardHolder)) {
 		%this.cardHolder = new AIPlayer(Cards) {
@@ -94,7 +97,8 @@ function Player::displayCards(%this) {
 
 	//cards
 	%count = %deck.numCards;
-	%start = %count / 2 + 7;
+	%start = mFloor(%count / 2) + 7;
+	talk(%count SPC %start);
 	for (%i = 0; %i < %count; %i++) {
 		if (!isObject(%this.card[%i])) {
 			%this.card[%i] = new AIPlayer(Cards) {
@@ -104,7 +108,7 @@ function Player::displayCards(%this) {
 			%this.card[%i].kill();
 		}
 		cardDisplay(%this.card[%i], getCardName(getWord(%deck.cards, %i)));
-		%this.cardHolder.mountObject(%this.card[%i], %start + %i);
+		%this.cardHolder.mountObject(%this.card[%i], %start - %i);
 	}
 	//cleanup of old cards
 	for (%i = %i; %i < 13; %i++) {
@@ -120,10 +124,11 @@ function Player::displayCards(%this) {
 		};
 		%this.cardHolder.kill();
 	}
-
 }
 
 function Player::hideCards(%this) {
+	%this.isCardsVisible = 0;
+	
 	if (isObject(%this.cardHolder)) {
 		%this.cardHolder.hideNode("ALL");
 	}

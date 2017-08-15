@@ -35,16 +35,16 @@ function DeckSO::addCard(%this, %card) {
 }
 
 function DeckSO::removeCard(%this, %idx) {
-	if (%this.numCards <= 0 || getWordcount(%this.cards)) {
-		error("Cannot remove card: No cards to remove!");
-		return;
+	if (%this.numCards <= 0 || !getWordCount(%this.cards)) {
+		// error("Cannot remove card: No cards to remove!");
+		return -1;
 	} else if (%idx < 0 ||  %idx >= %this.numCards) {
-		error("Cannot remove card: Index out of range!");
-		return;
+		// error("Cannot remove card: Index out of range!");
+		return -1;
 	}
 
 	%ret = getWord(%this.cards, %idx);
-	%this.cards = removeWord(%this, %idx);
+	%this.cards = removeWord(%this.cards, %idx);
 	%this.numCards--;
 	return %ret;
 }
@@ -59,12 +59,13 @@ function DeckSO::clearCards(%this)  {
 }
 
 function DeckSO::shuffleDeck(%deck) {
-	for (%i = 0; %i < %deck.numCards;) {
+	for (%i = 0; %i < %deck.numCards; %i = 0) {
 		%id = getRandom(%deck.numCards - 1);
-		%card = %deck.removeCard(%deck.cards, %id);
+		%card = %deck.removeCard(%id);
 		%shuffled = %shuffled SPC %card;
 		%count++;
 	}
+	talk(%shuffled);
 	%deck.cards = trim(%shuffled);
 	%deck.numCards = %count;
 }
@@ -74,7 +75,7 @@ function DeckSO::shuffleDeck(%deck) {
 
 
 function getCardName(%num) {
-	switch (%num / 13) {
+	switch (mFloor(%num / 13)) {
 		case 0: %suit = "s_";
 		case 1: %suit = "h_";
 		case 2: %suit = "c_";
