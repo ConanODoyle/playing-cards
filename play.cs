@@ -190,14 +190,6 @@ function deleteAllCards() {
 	}
 }
 
-function loopPlaceCards(%pl) {
-	cancel(%pl.loopPlaceCardsSched);
-
-	placeCard(%pl, $pos, 1, 0);
-
-	%pl.loopPlaceCardsSched = schedule(1000, %pl, loopPlaceCards, %pl);
-}
-
 
 
 
