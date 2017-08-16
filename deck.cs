@@ -16,7 +16,8 @@ function getNewDeck() {
 }
 
 function getShuffledDeck() {
-	%deck = getNewDeck().shuffle();
+	%deck = getNewDeck();
+	%deck.shuffle();
 	return %deck;
 }
 
@@ -58,14 +59,14 @@ function DeckSO::clearCards(%this)  {
 	%this.numCards = 0;
 }
 
-function DeckSO::shuffleDeck(%deck) {
+function DeckSO::shuffle(%deck) {
 	for (%i = 0; %i < %deck.numCards; %i = 0) {
 		%id = getRandom(%deck.numCards - 1);
 		%card = %deck.removeCard(%id);
 		%shuffled = %shuffled SPC %card;
 		%count++;
 	}
-	talk(%shuffled);
+	// talk(%shuffled);
 	%deck.cards = trim(%shuffled);
 	%deck.numCards = %count;
 }
