@@ -102,8 +102,8 @@ package SelectCards {
 		parent::serverCmdPlantBrick(%cl);
 	}
 
-	function WeaponImage::onUnmount(%this, %obj, %slot) {
-		if (%this.getID() == CardsOutImage.getID() && %obj.isCardsVisible) {
+	function CardsOutImage::onUnmount(%this, %obj, %slot) {
+		if (%obj.isCardsVisible) {
 			if (%obj.isSelectingCard) {
 				%obj.stopCardSelect();
 			}
@@ -112,14 +112,11 @@ package SelectCards {
 		parent::onMount(%this, %obj, %slot);
 	}
 
-	function WeaponImage::onMount(%this, %obj, %slot) {
-		if (%this.getID() != CardsOutImage.getID() && %obj.isCardsVisible) {
-			if (%obj.isSelectingCard) {
-				%obj.stopCardSelect();
-			}
-			%obj.hideCards();
+	function CardsOutImage::onMount(%this, %obj, %slot) {
+		if (!%obj.isCardsVisible) {
+			%obj.displayCards();
 		}
-		parent::onMount(%this, %obj, %slot);
+		return parent::onMount(%this, %obj, %slot);
 	}
 
 	function Player::activateStuff(%this) {

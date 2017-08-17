@@ -83,6 +83,7 @@ function Player::displayCards(%this) {
 	}
 
 	%this.playThread(1, armReadyBoth);
+	%this.playThread(2, root);
 
 	%this.hideNode("lHand");
 	%this.hideNode("rHand");
