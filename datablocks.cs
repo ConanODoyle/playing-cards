@@ -90,8 +90,19 @@ datablock StaticShapeData(CardShape) {
 	shapeFile = "./cards.dts";
 };
 
+datablock ItemData(CardsOutItem : HammerItem) {
+	shapeFile = "./deckofcards.dts";
+	image = CardsOutImage;
+
+	uiName = "Cards";
+};
+
 datablock ShapeBaseImageData(CardsOutImage) {
 	shapeFile = "base/data/shapes/empty.dts";
+  
+	item = CardsOutItem;
+  
+	stateName[0] = "Activate";
 };
 
 function cardDisplay(%pl, %card) {

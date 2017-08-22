@@ -139,6 +139,10 @@ function Player::hideCards(%this) {
 			%this.card[%i].hideNode("ALL");
 		}
 	}
+	
+	if (%this.isSelectingCard) {
+		%this.stopCardSelect();
+    }
 
 	%this.client.applyBodyParts();
 }

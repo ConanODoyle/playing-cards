@@ -8,18 +8,11 @@ function Player::cycleCardSelect(%this, %dir) {
 	%lastCard = %this.currentCard + 0;
 	%this.currentCard = (%this.currentCard + %dir + %deck.numCards) % %deck.numCards;
  	
- 	// talk(%lastCard SPC %this.currentCard);
 	if (isObject(%this.card[%lastCard])) {
 		%this.card[%lastCard].playThread(0, root);
-		// %this.card[%lastCard].playThread(1, root);
-		// %this.card[%lastCard].playThread(2, root);
-		// %this.card[%lastCard].playThread(3, root);
 	}
 	if (isObject(%this.card[%this.currentCard])) {
 		%this.card[%this.currentCard].playThread(0, cardUp);
-		// %this.card[%this.currentCard].playThread(1, cardUp);
-		// %this.card[%this.currentCard].playThread(2, cardUp);
-		// %this.card[%this.currentCard].playThread(3, cardUp);
 	}
 }
 
@@ -33,23 +26,32 @@ function Player::startCardSelect(%this) {
       
 	%this.currentCard = 0;
 	%this.isSelectingCard = 1;
+	%this.selection = "";
 	if (isObject(%this.card[%this.currentCard])) {
 		%this.card[%this.currentCard].playThread(0, cardUp);
-		// %this.card[%this.currentCard].playThread(1, cardUp);
-		// %this.card[%this.currentCard].playThread(2, cardUp);
-		// %this.card[%this.currentCard].playThread(3, cardUp);
 	}
 }
 
 function Player::stopCardSelect(%this) {
 	if (isObject(%this.card[%this.currentCard])) {
 		%this.card[%this.currentCard].playThread(0, root);
-		// %this.card[%this.currentCard].playThread(1, root);
-		// %this.card[%this.currentCard].playThread(2, root);
-		// %this.card[%this.currentCard].playThread(3, root);
 	}
 	%this.currentCard = 0;
 	%this.isSelectingCard = 0;
+	%this.selection = "";
+}
+
+function Player::confirmCardSelect(%this){
+	%selectCard = %this.currentCard;
+	if (!%this.card[%selectCard].isSelected) {
+		%this.selection = trim(%this.selection SPC %selectCard);
+		%this.card[%selectCard].isSelected = 1;
+		%this.card[%selectCard].setNodeColor("ALL", "0.5 1 0.5 1");
+	} else {
+		%this.selection = removeWord(%this.selection, getWordIndex(%this.selection, %selectCard));
+		%this.card[%selectCard].isSelected = 0;
+		%this.card[%selectCard].setNodeColor("ALL", "1 1 1 1");
+    }
 }
 
 $LEFTCLICK = 0;
@@ -95,8 +97,8 @@ package SelectCards {
 
 	function serverCmdPlantBrick(%cl) {
 		if (isObject(%pl = %cl.player) && %pl.isSelectingCard) {
-			%pl.confirmCardSelection();
-			%pl.stopCardSelect();
+			%pl.confirmCardSelect();
+			//%pl.stopCardSelect();
 			return;
 		}
 		parent::serverCmdPlantBrick(%cl);
