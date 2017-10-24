@@ -4,6 +4,20 @@ package RemoveDecksOnDeath {
 
 		return parent::onRemove(%this, %obj);
 	}
+
+	function Armor::onMount(%this, %obj, %vehi, %node) {
+		if (%this.getID() == CardHolderArmor.getID() || %this.getID() == CardArmor.getID()) {
+			%obj.setTransform("0 0 0 0 0 1 0");
+			return;
+		}
+		return parent::onMount(%this, %obj, %vehi, %node);
+	}
+
+	function GameConnection::onDeath(%cl, %a, %b, %c, %d) {
+		%cl.player.clearCardData();
+
+		return parent::onDeath(%cl, %a, %b, %c, %d);
+	}
 };
 activatePackage(RemoveDecksOnDeath);
 
@@ -20,7 +34,22 @@ function Player::addCard(%this, %card) {
 		return;
 	}
 
-	%this.deck.addCard(%card);
+	%cl = %this.client;
+
+	if (%this.isDealingCards) {
+		%this.addDeckCard(%card);
+
+		%this.recentlyAddedCardCount++;
+		bottomprintCardInfo(%this);
+
+		%this.scheduleClearAddedCardCount();
+	} else {
+		%this.deck.addCard(%card);
+
+		if (isObject(%cl)) {
+			messageClient(%this.client, '', "\c6You picked up a " @ getLongCardName(%card));
+		}
+	}
 }
 
 function Player::removeCardIndex(%this, %idx) {
@@ -56,7 +85,7 @@ function Player::clearCardData(%this) {
 		%this.cardHolder.delete();
 	}
 
-	for (%i = %i; %i < 13; %i++) {
+	for (%i = 0; %i < 13; %i++) {
 		if (isObject(%this.card[%i])) {
 			%this.card[%i].delete();
 		}
@@ -79,6 +108,7 @@ function Player::displayCards(%this) {
 			owner = %this;
 		};
 		%this.cardHolder.kill();
+		%this.cardHolder.setScale("1 1 1");
 		%this.mountObject(%this.cardHolder, 7);
 	}
 
@@ -99,7 +129,6 @@ function Player::displayCards(%this) {
 	//cards
 	%count = %deck.numCards;
 	%start = mFloor(%count / 2) + 7;
-	talk(%count SPC %start);
 	for (%i = 0; %i < %count; %i++) {
 		if (!isObject(%this.card[%i])) {
 			%this.card[%i] = new AIPlayer(Cards) {
@@ -109,6 +138,7 @@ function Player::displayCards(%this) {
 			%this.card[%i].kill();
 		}
 		cardDisplay(%this.card[%i], getCardName(getWord(%deck.cards, %i)));
+		%this.card[%i].setTransform("0 0 0 0 0 1 0");
 		%this.cardHolder.mountObject(%this.card[%i], %start - %i);
 	}
 	//cleanup of old cards
@@ -125,6 +155,8 @@ function Player::displayCards(%this) {
 		};
 		%this.cardHolder.kill();
 	}
+
+	bottomprintCardInfo(%this);
 }
 
 function Player::hideCards(%this) {
@@ -145,4 +177,13 @@ function Player::hideCards(%this) {
     }
 
 	%this.client.applyBodyParts();
+	bottomprintCardInfo(%this);
+}
+
+function Player::scheduleClearAddedCardCount(%pl) {
+	cancel(%pl.clearAddedCardCountSched1);
+	cancel(%pl.clearAddedCardCountSched2);
+
+	%pl.clearAddedCardCountSched1 = schedule(1200, %pl, eval, %pl @ ".recentlyAddedCardCount = 0;");
+	%pl.clearAddedCardCountSched2 = schedule(1200, %pl, eval, "bottomprintCardInfo(" @ %pl @ ");");
 }

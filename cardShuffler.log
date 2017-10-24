@@ -1,0 +1,12 @@
+
+Exporting group 'cardShuffler'.
+Processing definition objects.
+  Defined brick size: 1 wide 1 deep and 1 brick tall
+  [WARNING] No brick grid definitions found. Automatically generated brick grid may be undesirable.
+  [WARNING] No collision definitions found. Calculating full brick collision.
+Processing meshes.
+  Exporting object: brick cardShuffler
+    [WARNING] 12 triangles degenerated to quads.
+  Brick quads: 86
+Writing to file.
+  Output file: C:\Users\Samuel\Documents\Blockland\Addon Development Copy\Add-Ons\Item_PlayingCards\cardShuffler.blb
