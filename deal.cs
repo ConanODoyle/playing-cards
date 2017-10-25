@@ -174,7 +174,6 @@ function DeckOutImage::onUnmount(%this, %obj, %slot) {
 
 function DeckOutImage::onMount(%this, %obj, %slot) {
 	%obj.isDealingCards = 1;
-	%obj.placeFaceDown = 1;
 	%obj.clearAddedCardCount();
 	bottomprintCardInfo(%obj);
 	%obj.displayDeck();

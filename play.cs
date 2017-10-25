@@ -74,44 +74,114 @@ $RIGHTCLICK = 4;
 
 package PlayCards {
 	function Armor::onTrigger(%this, %obj, %trig, %val) {
-		if ((%trig == $LEFTCLICK || %trig == $RIGHTCLICK) && %val && %obj.isCardsVisible && !%obj.isSelectingCard) {
-			if (%obj.deck.numCards <= 0) {
-				%cl = %obj.client;
-				%cl.centerprint("You cannot pick up cards with the item out!");
-				%cl.schedule(50, centerprint, "\c3You cannot pick up cards with the item out!");
-				%cl.schedule(100, centerprint, "You cannot pick up cards with the item out!");
-				%cl.schedule(150, centerprint, "\c3You cannot pick up cards with the item out!");
-				%cl.schedule(200, centerprint, "You cannot pick up cards with the item out!", 2);
+		%pl = %obj;
+		%cl = %pl.client;
+		%s = getWords(%obj.getEyeTransform(), 0, 2);
+		%masks = $TypeMasks::fxBrickObjectType | $TypeMasks::StaticObjectType | $TypeMasks::TerrainObjectType;
+
+		if (%trig == $RIGHTCLICK && %val == 1) {
+			if (%obj.isCardsVisible) {
+				if (!%obj.isSelectingCard) { //Hand: Pick up card near hit location
+					%e = vectorAdd(vectorScale(%obj.getEyeVector(), 5), %s);
+					%ray = containerRaycast(%s, %e, %masks, %obj);
+					%hitloc = getWords(%ray, 1, 3);
+
+					if (!isObject(getWord(%ray, 0))) {
+						return;
+					}
+
+					initContainerBoxSearch(%hitloc, "0.5 0.5 0.5", $TypeMasks::StaticObjectType | $TypeMasks::ItemObjectType);
+					%next = containerSearchNext();
+					// talk("found? " @ %next);
+					if (isObject(%next) && %next.card !$= "") {
+						%obj.pickUpCard(%next);
+						if (%obj.isCardsVisible) {
+							%obj.displayCards();
+						}
+						return;
+					}
+				} else { //Hand: Cycle card select if in selection mode
+					%obj.cycleCardSelect(1);
+				}
+
+
 				return;
-			} else {
-				%obj.startCardSelect();
-			}
-		} else if (%obj.isSelectingCard && %val == 1 && (%trig == $LEFTCLICK || %trig == $RIGHTCLICK)) {
-			if (%trig == $LEFTCLICK) {
-				%pl = %obj;
-				%cl = %pl.client;
-				if (!%pl.placeCurrentCard()) {
-					%cl.centerprint("Invalid location to place!");
-					%cl.schedule(50, centerprint, "\c3Invalid location to place!");
-					%cl.schedule(100, centerprint, "Invalid location to place!");
-					%cl.schedule(150, centerprint, "\c3Invalid location to place!");
-					%cl.schedule(200, centerprint, "Invalid location to place!", 2);
+			} else if (%obj.isDeckVisible) { //Deck: Pick up card near hit location
+				%e = vectorAdd(vectorScale(%obj.getEyeVector(), 5), %s);
+				%ray = containerRaycast(%s, %e, %masks, %obj);
+				%hitloc = getWords(%ray, 1, 3);
+
+				if (!isObject(getWord(%ray, 0))) {
 					return;
 				}
 
-				if (%pl.deck.numCards > 0) {
-					%pl.cycleCardSelect(1);
-					%pl.cycleCardSelect(-1);
-				} else {
-					%pl.stopCardSelect();
+				initContainerBoxSearch(%hitloc, "0.5 0.5 0.5", $TypeMasks::StaticObjectType | $TypeMasks::ItemObjectType);
+				%next = containerSearchNext();
+				// talk("found? " @ %next);
+				if (isObject(%next) && %next.card !$= "") {
+					%obj.pickUpDeckCard(%next);
+					bottomprintCardInfo(%obj);
+					return;
 				}
-			} else {
-				%obj.cycleCardSelect(1);
+
+
+				return;
+			} else if (!isObject(%obj.getMountedImage(0))) { //Flip card near hit location
+				talk("doing flip?");
+				%e = vectorAdd(vectorScale(%obj.getEyeVector(), 5), %s);
+				%ray = containerRaycast(%s, %e, %masks, %obj);
+				%hitloc = getWords(%ray, 1, 3);
+
+				if (!isObject(getWord(%ray, 0))) {
+					return;
+				}
+
+				talk("hit a pos");
+
+				initContainerBoxSearch(%hitloc, "0.5 0.5 0.5", $TypeMasks::StaticObjectType | $TypeMasks::ItemObjectType);
+				%next = containerSearchNext();
+				// talk("found? " @ %next);
+				if (isObject(%next) && %next.card !$= "") {
+					if (!%next.down) {
+						%next.playThread(0, cardFaceUp);
+					} else {
+						%next.playThread(0, cardFaceDown);
+					}
+
+					%next.down = !%next.down;
+					serverPlay3D(("cardPick" @ getRandom(1, 4) @ "Sound"), %next.getPosition());
+				}
+
+
+				return;
 			}
-		} else if (%val && %obj.isDealingCards) {
-			if (%trig == $LEFTCLICK) {
-				%pl = %obj;
-				%cl = %pl.client;
+
+			//do not premature return if no deck or cards are out
+		} else if (%trig == $LEFTCLICK && %val == 1) {
+			if (%obj.isCardsVisible) {
+				if (%obj.isSelectingCard) { //Hand: Attempt to place currently selected card
+					if (!%pl.placeCurrentCard()) {
+						%cl.centerprint("Invalid location to place!");
+						%cl.schedule(50, centerprint, "\c3Invalid location to place!");
+						%cl.schedule(100, centerprint, "Invalid location to place!");
+						%cl.schedule(150, centerprint, "\c3Invalid location to place!");
+						%cl.schedule(200, centerprint, "Invalid location to place!", 2);
+						return;
+					}
+
+					if (%pl.deck.numCards > 0) {
+						%pl.cycleCardSelect(1);
+						%pl.cycleCardSelect(-1);
+					} else {
+						%pl.stopCardSelect();
+					}
+				} else { //Hand: Start card select
+					%obj.startCardSelect();
+				}
+
+
+				return;
+			} else if (%obj.isDeckVisible) { //Deck: Attempt to place top card of deck
 				if (!%pl.placeDeckCard()) {
 					if (%pl.deckBrick.deck.numCards <= 0) {
 						return;
@@ -124,39 +194,12 @@ package PlayCards {
 					return;
 				}
 				bottomprintCardInfo(%pl);
-			} else if (%trig == $RIGHTCLICK) {
-				%s = getWords(%obj.getEyeTransform(), 0, 2);
-				%e = vectorAdd(vectorScale(%obj.getEyeVector(), 5), %s);
-				%masks = $TypeMasks::fxBrickObjectType | $TypeMasks::StaticObjectType | $TypeMasks::TerrainObjectType;
-				%ray = containerRaycast(%s, %e, %masks, %obj);
-				%hitloc = getWords(%ray, 1, 3);
 
-				initContainerBoxSearch(%hitloc, "0.5 0.5 0.5", $TypeMasks::StaticObjectType | $TypeMasks::ItemObjectType);
-				%next = containerSearchNext();
-				// talk("found? " @ %next);
-				if (isObject(%next) && %next.card !$= "") {
-					%obj.pickUpDeckCard(%next);
-					bottomprintCardInfo(%obj);
-					return;
-				}
-			}
-		} else if (%trig == $LEFTCLICK && %val && !%obj.isSelectingCard) {
-			%s = getWords(%obj.getEyeTransform(), 0, 2);
-			%e = vectorAdd(vectorScale(%obj.getEyeVector(), 5), %s);
-			%masks = $TypeMasks::fxBrickObjectType | $TypeMasks::StaticObjectType | $TypeMasks::TerrainObjectType;
-			%ray = containerRaycast(%s, %e, %masks, %obj);
-			%hitloc = getWords(%ray, 1, 3);
 
-			initContainerBoxSearch(%hitloc, "0.5 0.5 0.5", $TypeMasks::StaticObjectType | $TypeMasks::ItemObjectType);
-			%next = containerSearchNext();
-			// talk("found? " @ %next);
-			if (isObject(%next) && %next.card !$= "") {
-				%obj.pickUpCard(%next);
-				if (%obj.isCardsVisible) {
-					%obj.displayCards();
-				}
 				return;
 			}
+
+			//do not premature return if no deck or cards are out
 		} 
 
 		return parent::onTrigger(%this, %obj, %trig, %val);
@@ -230,9 +273,9 @@ package PlayCards {
 			} else if (%dir $= "RIGHT") {
 				%pl.cycleCardSelect(1);
 			} else if ((%dir $= "UP" || %dir $= "FORWARD") && !%pl.card[%selectCard].isSelected) {
-				%pl.confirmCardSelect();
+				// %pl.confirmCardSelect();
 			} else if ((%dir $= "DOWN" || %dir $= "BACKWARD") && %pl.card[%selectCard].isSelected) {
-				%pl.confirmCardSelect();
+				// %pl.confirmCardSelect();
 			}
 			return;
 		}
@@ -248,9 +291,9 @@ package PlayCards {
 			} else if (%dir $= "RIGHT") {
 				%pl.cycleCardSelect(1);
 			} else if ((%dir $= "UP" || %dir $= "FORWARD") && !%pl.card[%selectCard].isSelected) {
-				%pl.confirmCardSelect();
+				// %pl.confirmCardSelect();
 			} else if ((%dir $= "DOWN" || %dir $= "BACKWARD") && %pl.card[%selectCard].isSelected) {
-				%pl.confirmCardSelect();
+				// %pl.confirmCardSelect();
 			}
 			return;
 		}
@@ -370,6 +413,8 @@ function placeCard(%pl, %pos, %card, %down) {
 	} else {
 		%cardShape.playThread(0, cardFaceDown);
 	}
+
+	%cardShape.down = %down;
 
 	cardDisplay(%cardShape, getCardName(%card));
 }

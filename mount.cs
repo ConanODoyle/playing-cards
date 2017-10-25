@@ -96,67 +96,69 @@ function Player::clearCardData(%this) {
 ////////////////////
 
 
-function Player::displayCards(%this) {
-	%deck = %this.deck;
+function Player::displayCards(%pl) {
+	%deck = %pl.deck;
 
-	%this.isCardsVisible = 1;
+	%pl.isCardsVisible = 1;
 
 	//cardholder
-	if (!isObject(%this.cardHolder)) {
-		%this.cardHolder = new AIPlayer(Cards) {
+	if (!isObject(%pl.cardHolder)) {
+		%pl.cardHolder = new AIPlayer(Cards) {
 			datablock = CardHolderArmor;
-			owner = %this;
+			owner = %pl;
 		};
-		%this.cardHolder.kill();
-		%this.cardHolder.setScale("1 1 1");
-		%this.mountObject(%this.cardHolder, 7);
+		%pl.cardHolder.kill();
+		%pl.cardHolder.setScale("1 1 1");
+		%pl.mountObject(%pl.cardHolder, 7);
 	}
 
-	%this.playThread(1, armReadyBoth);
-	%this.playThread(2, root);
+	%cl = %pl.client;
 
-	%this.hideNode("lHand");
-	%this.hideNode("rHand");
-	%this.hideNode("lHook");
-	%this.hideNode("rHook");
+	%pl.playThread(1, armReadyBoth);
+	%pl.playThread(2, root);
 
-	%this.cardHolder.hideNode("ALL");
-	%this.cardHolder.unHideNode($LHand[%this.client.lhand]);
-	%this.cardHolder.unHideNode($RHand[%this.client.rhand]);
-	%this.cardHolder.setNodeColor($LHand[%this.client.lhand], %this.client.lhandColor);
-	%this.cardHolder.setNodeColor($RHand[%this.client.rhand], %this.client.rhandcolor);
+	%pl.hideNode("lHand");
+	%pl.hideNode("rHand");
+	%pl.hideNode("lHook");
+	%pl.hideNode("rHook");
+
+	%pl.cardHolder.hideNode("ALL");
+	%pl.cardHolder.unHideNode($LHand[%cl.lhand]);
+	%pl.cardHolder.unHideNode($RHand[%cl.rhand]);
+	%pl.cardHolder.setNodeColor($LHand[%cl.lhand], %cl.lhandColor);
+	%pl.cardHolder.setNodeColor($RHand[%cl.rhand], %cl.rhandcolor);
 
 	//cards
 	%count = %deck.numCards;
 	%start = mFloor(%count / 2) + 7;
 	for (%i = 0; %i < %count; %i++) {
-		if (!isObject(%this.card[%i])) {
-			%this.card[%i] = new AIPlayer(Cards) {
+		if (!isObject(%pl.card[%i])) {
+			%pl.card[%i] = new AIPlayer(Cards) {
 				datablock = CardArmor;
-				owner = %this;
+				owner = %pl;
 			};
-			%this.card[%i].kill();
+			%pl.card[%i].kill();
 		}
-		cardDisplay(%this.card[%i], getCardName(getWord(%deck.cards, %i)));
-		%this.card[%i].setTransform("0 0 0 0 0 1 0");
-		%this.cardHolder.mountObject(%this.card[%i], %start - %i);
+		cardDisplay(%pl.card[%i], getCardName(getWord(%deck.cards, %i)));
+		%pl.card[%i].setTransform("0 0 0 0 0 1 0");
+		%pl.cardHolder.mountObject(%pl.card[%i], %start - %i);
 	}
 	//cleanup of old cards
 	for (%i = %i; %i < 13; %i++) {
-		if (isObject(%this.card[%i])) {
-			%this.card[%i].delete();
+		if (isObject(%pl.card[%i])) {
+			%pl.card[%i].delete();
 		}
 	}
 
-	if (!isObject(%this.cardHolder)) {
-		%this.cardHolder = new AIPlayer(Cards) {
+	if (!isObject(%pl.cardHolder)) {
+		%pl.cardHolder = new AIPlayer(Cards) {
 			datablock = CardHolderArmor;
-			owner = %this;
+			owner = %pl;
 		};
-		%this.cardHolder.kill();
+		%pl.cardHolder.kill();
 	}
 
-	bottomprintCardInfo(%this);
+	bottomprintCardInfo(%pl);
 }
 
 function Player::hideCards(%this) {
@@ -180,41 +182,44 @@ function Player::hideCards(%this) {
 	bottomprintCardInfo(%this);
 }
 
-function Player::displayDeck(%this) {
+function Player::displayDeck(%pl) {
+	%pl.isDeckVisible = 1;
 	//cardholder
-	if (!isObject(%this.deckShuffle)) {
-		%this.deckShuffle = new AIPlayer(Cards) {
+	if (!isObject(%pl.deckShuffle)) {
+		%pl.deckShuffle = new AIPlayer(Cards) {
 			datablock = DeckShuffleArmor;
-			owner = %this;
+			owner = %pl;
 		};
-		%this.deckShuffle.kill();
-		%this.deckShuffle.setScale("1 1 1");
-		%this.mountObject(%this.deckShuffle, 7);
+		%pl.deckShuffle.kill();
+		%pl.deckShuffle.setScale("1 1 1");
+		%pl.mountObject(%pl.deckShuffle, 7);
 	}
+	%cl = %pl.client;
 
-	%this.playThread(1, armReadyBoth);
-	%this.playThread(2, root);
+	%pl.playThread(1, armReadyBoth);
+	%pl.playThread(2, root);
 
-	%this.hideNode("lHand");
-	%this.hideNode("rHand");
-	%this.hideNode("lHook");
-	%this.hideNode("rHook");
+	%pl.hideNode("lHand");
+	%pl.hideNode("rHand");
+	%pl.hideNode("lHook");
+	%pl.hideNode("rHook");
 
-	%this.deckShuffle.hideNode("ALL");
-	%this.deckShuffle.unHideNode($LHand[%this.client.lhand]);
-	%this.deckShuffle.unHideNode($RHand[%this.client.rhand]);
-	%this.deckShuffle.unHideNode("deck1");
-	%this.deckShuffle.unHideNode("deck2");
-	%this.deckShuffle.unHideNode("deck3");
-	%this.deckShuffle.setNodeColor($LHand[%this.client.lhand], %this.client.lhandColor);
-	%this.deckShuffle.setNodeColor($RHand[%this.client.rhand], %this.client.rhandcolor);
+	%pl.deckShuffle.hideNode("ALL");
+	%pl.deckShuffle.unHideNode($LHand[%cl.lhand]);
+	%pl.deckShuffle.unHideNode($RHand[%cl.rhand]);
+	%pl.deckShuffle.unHideNode("deck1");
+	%pl.deckShuffle.unHideNode("deck2");
+	%pl.deckShuffle.unHideNode("deck3");
+	%pl.deckShuffle.setNodeColor($LHand[%cl.lhand], %cl.lhandColor);
+	%pl.deckShuffle.setNodeColor($RHand[%cl.rhand], %cl.rhandcolor);
 
-	%this.deckShuffle.schedule(getRandom(1, 3) * 1000, playThread, 0, shuffle);
-	%this.deckShuffle.schedule(getRandom(6, 10) * 1000, playThread, 0, root);
+	%pl.deckShuffle.schedule(getRandom(1, 3) * 1000, playThread, 0, shuffle);
+	%pl.deckShuffle.schedule(getRandom(5, 6) * 1000, playThread, 0, root);
 }
 
-function Player::hideDeck(%this) {
-	%this.deckShuffle.hideNode("ALL");
-	%this.applyBodyParts();
-	%this.applyBodyColors();
+function Player::hideDeck(%pl) {
+	%pl.deckShuffle.hideNode("ALL");
+	%pl.applyBodyParts();
+	%pl.applyBodyColors();
+	%pl.isDeckVisible = 0;
 }

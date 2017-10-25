@@ -9,8 +9,9 @@ function getBottomprintUI(%pl) {
 	} else {
 		if (%pl.deck.numCards == 0) {
 			%line0 = "<just:center>You have no cards!";
+			%line0 = %line0 @ " <br><just:center>\c3Right Click\c6 - Pick up cards";
 		} else {
-			%line0 = "<just:center>\c2Click to enter Select Mode";
+			%line0 = "<just:left>\c3Left Click\c6 - Enter Select Mode <just:right>\c3Right Click\c6 - Pick up cards";
 			%line0 = %line0 @ " <br><just:center>\c6Placing " @ (%pl.placeFaceDown ? "Face Down" : "Face Up");
 		}
 		return %line0;
