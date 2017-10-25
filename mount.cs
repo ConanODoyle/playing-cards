@@ -180,10 +180,41 @@ function Player::hideCards(%this) {
 	bottomprintCardInfo(%this);
 }
 
-function Player::scheduleClearAddedCardCount(%pl) {
-	cancel(%pl.clearAddedCardCountSched1);
-	cancel(%pl.clearAddedCardCountSched2);
+function Player::displayDeck(%this) {
+	//cardholder
+	if (!isObject(%this.deckShuffle)) {
+		%this.deckShuffle = new AIPlayer(Cards) {
+			datablock = DeckShuffleArmor;
+			owner = %this;
+		};
+		%this.deckShuffle.kill();
+		%this.deckShuffle.setScale("1 1 1");
+		%this.mountObject(%this.deckShuffle, 7);
+	}
 
-	%pl.clearAddedCardCountSched1 = schedule(1200, %pl, eval, %pl @ ".recentlyAddedCardCount = 0;");
-	%pl.clearAddedCardCountSched2 = schedule(1200, %pl, eval, "bottomprintCardInfo(" @ %pl @ ");");
+	%this.playThread(1, armReadyBoth);
+	%this.playThread(2, root);
+
+	%this.hideNode("lHand");
+	%this.hideNode("rHand");
+	%this.hideNode("lHook");
+	%this.hideNode("rHook");
+
+	%this.deckShuffle.hideNode("ALL");
+	%this.deckShuffle.unHideNode($LHand[%this.client.lhand]);
+	%this.deckShuffle.unHideNode($RHand[%this.client.rhand]);
+	%this.deckShuffle.unHideNode("deck1");
+	%this.deckShuffle.unHideNode("deck2");
+	%this.deckShuffle.unHideNode("deck3");
+	%this.deckShuffle.setNodeColor($LHand[%this.client.lhand], %this.client.lhandColor);
+	%this.deckShuffle.setNodeColor($RHand[%this.client.rhand], %this.client.rhandcolor);
+
+	%this.deckShuffle.schedule(getRandom(1, 3) * 1000, playThread, 0, shuffle);
+	%this.deckShuffle.schedule(getRandom(6, 10) * 1000, playThread, 0, root);
+}
+
+function Player::hideDeck(%this) {
+	%this.deckShuffle.hideNode("ALL");
+	%this.applyBodyParts();
+	%this.applyBodyColors();
 }

@@ -11,6 +11,7 @@ function getBottomprintUI(%pl) {
 			%line0 = "<just:center>You have no cards!";
 		} else {
 			%line0 = "<just:center>\c2Click to enter Select Mode";
+			%line0 = %line0 @ " <br><just:center>\c6Placing " @ (%pl.placeFaceDown ? "Face Down" : "Face Up");
 		}
 		return %line0;
 	}
@@ -50,9 +51,9 @@ function getBottomprintDeckUI(%pl) {
 	}
 	%line1 = %line1 @ " <br>";
 
-	%line2 = "<just:left>\c3Left Click <just:right>\c3Light <br>";
-	%line3 = "<just:left>\c6Place " @ (%pl.placeFaceDown ? "Face Down" : "Face Up");
-	%line3 = %line3 @ "<just:right>\c6Toggle Place Mode";
+	%line2 = "<just:left>\c3Left Click<just:center>\c3Right Click               <just:right>\c3Light <br>";
+	%line3 = "<just:left>\c6Place " @ (%pl.placeFaceDown ? "Face Down" : "Face Up     ");
+	%line3 = %line3 @ "<just:center>\c6Pick Up                            <just:right>\c6Toggle Mode";
 
 	return %line1 @ %line2 @ %line3;
 }

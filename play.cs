@@ -258,7 +258,7 @@ package PlayCards {
 	}
 
 	function serverCmdLight(%cl) {
-		if (isObject(%pl = %cl.player) && (%pl.isSelectingCard || %pl.isDealingCards)) {
+		if (isObject(%pl = %cl.player) && (%pl.isCardsVisible || %pl.isDealingCards)) {
 			%pl.placeFaceDown = !%pl.placeFaceDown;
 			bottomprintCardInfo(%pl);
 			return;

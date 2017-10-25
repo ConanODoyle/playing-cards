@@ -115,7 +115,7 @@ function fxDTSBrick::shuffleDeck(%b, %cl) {
 	}
 	%b.deck.shuffle();
 
-	messageClient(%cl, '', "\c6Deck shuffled! Total cards: " @ %num * 52);
+	messageClient(%cl, '', "\c6Deck shuffled! Total cards: " @ %b.deck.numCards);
 }
 
 function fxDTSBrick::setDeckCount(%b, %num, %cl) {
@@ -169,6 +169,7 @@ function GameConnection::clearCards(%cl) {
 function DeckOutImage::onUnmount(%this, %obj, %slot) {
 	%obj.isDealingCards = 0;
 	bottomprintCardInfo(%obj);
+	%obj.hideDeck();
 }
 
 function DeckOutImage::onMount(%this, %obj, %slot) {
@@ -176,6 +177,7 @@ function DeckOutImage::onMount(%this, %obj, %slot) {
 	%obj.placeFaceDown = 1;
 	%obj.clearAddedCardCount();
 	bottomprintCardInfo(%obj);
+	%obj.displayDeck();
 }
 
 

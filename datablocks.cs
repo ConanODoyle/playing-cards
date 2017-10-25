@@ -79,6 +79,13 @@ datablock TSShapeConstructor(CardDTS) {
 	sequence1	= "./tex/cards.dsq"; //has all anims for dts (root, cardUp)
 };
 
+datablock TSShapeConstructor(DeckShuffleDTS) {
+	baseShape	= "./tex/deckShuffle.dts";
+	sequence0	= "./tex/deckShuffle.dsq root";
+
+	sequence1	= "./tex/deckShuffle.dsq"; //has all anims for dts (root, cardUp)
+};
+
 datablock PlayerData(CardArmor : PlayerStandardArmor) {
 	shapeFile = "./tex/cards.dts";
 
@@ -112,7 +119,6 @@ datablock PlayerData(CardArmor : PlayerStandardArmor) {
 
 	keepWhenDead = 1;
 };
-
 datablock TSShapeConstructor(CardHolderDTS) {
 	baseShape	= "./tex/cardHolder.dts";
 
@@ -152,6 +158,11 @@ datablock PlayerData(CardHolderArmor : PlayerStandardArmor) {
 
 	keepWhenDead = 1;
 };
+
+datablock PlayerData(DeckShuffleArmor : CardHolderArmor) {
+	shapeFile = "./tex/deckShuffle.dts";
+};
+
 
 datablock PlayerData(CardChairArmor : PlayerStandardArmor) {
 	canJet = 0;
