@@ -106,7 +106,7 @@ package PlayCards {
 
 
 				return;
-			} else if (%obj.isDeckVisible) { //Deck: Pick up card near hit location
+			} else if (%obj.isDeckVisible && isObject(%obj.deckBrick.deck)) { //Deck: Pick up card near hit location
 				%e = vectorAdd(vectorScale(%obj.getEyeVector(), 5), %s);
 				%ray = containerRaycast(%s, %e, %masks, %obj);
 				%hitloc = getWords(%ray, 1, 3);
@@ -127,7 +127,6 @@ package PlayCards {
 
 				return;
 			} else if (!isObject(%obj.getMountedImage(0))) { //Flip card near hit location
-				talk("doing flip?");
 				%e = vectorAdd(vectorScale(%obj.getEyeVector(), 5), %s);
 				%ray = containerRaycast(%s, %e, %masks, %obj);
 				%hitloc = getWords(%ray, 1, 3);
@@ -136,13 +135,11 @@ package PlayCards {
 					return;
 				}
 
-				talk("hit a pos");
-
 				initContainerBoxSearch(%hitloc, "0.5 0.5 0.5", $TypeMasks::StaticObjectType | $TypeMasks::ItemObjectType);
 				%next = containerSearchNext();
 				// talk("found? " @ %next);
 				if (isObject(%next) && %next.card !$= "") {
-					if (!%next.down) {
+					if (%next.down) {
 						%next.playThread(0, cardFaceUp);
 					} else {
 						%next.playThread(0, cardFaceDown);
@@ -154,11 +151,36 @@ package PlayCards {
 
 
 				return;
+			} else if (%obj.isChipsVisible && %obj.bet > 0) {
+				%obj.bet = "";
+				bottomprintChipInfo(%obj);
+				return;
+			} else if (%obj.canPickUpChips && getSimTime() - %obj.lastChipPickupTime > 500) {
+				%e = vectorAdd(vectorScale(%obj.getEyeVector(), 5), %s);
+				%ray = containerRaycast(%s, %e, %masks, %obj);
+				%hitloc = getWords(%ray, 1, 3);
+
+				if (!isObject(getWord(%ray, 0))) {
+					return;
+				}
+
+				initContainerBoxSearch(%hitloc, "0.5 0.5 0.5", $TypeMasks::StaticObjectType | $TypeMasks::ItemObjectType);
+				%next = containerSearchNext();
+				// talk("found? " @ %next);
+				if (isObject(%next)) {
+					if (!pickUpChips(%next, %cl)) {
+						return parent::onTrigger(%this, %obj, %trig, %val);
+					}
+					%obj.lastChipPickupTime = getSimTime();
+					
+					bottomprintChipInfo(%obj);
+					return;
+				}
 			}
 
 			//do not premature return if no deck or cards are out
 		} else if (%trig == $LEFTCLICK && %val == 1) {
-			if (%obj.isCardsVisible) {
+			if (%obj.isCardsVisible && %obj.deck.numCards > 0) {
 				if (%obj.isSelectingCard) { //Hand: Attempt to place currently selected card
 					if (!%pl.placeCurrentCard()) {
 						%cl.centerprint("Invalid location to place!");
@@ -197,6 +219,42 @@ package PlayCards {
 
 
 				return;
+			} else if (%obj.isChipsVisible && %obj.bet > 0) {
+				%e = vectorAdd(vectorScale(%obj.getEyeVector(), 5), %s);
+				%ray = containerRaycast(%s, %e, %masks, %obj);
+				%hitloc = getWords(%ray, 1, 3);
+
+				if (!isObject(getWord(%ray, 0)) || getWords(%ray, 4, 6) !$= "0 0 1") {
+					return parent::onTrigger(%this, %obj, %trig, %val);
+				}
+
+				%obj.client.score -= %obj.bet;
+				%obj.placeChips(%obj.bet, %hitloc);
+				%obj.bet = "";
+				bottomprintChipInfo(%obj);
+
+
+				return;
+			} else if (%obj.addToChips !$= "") {
+				%e = vectorAdd(vectorScale(%obj.getEyeVector(), 5), %s);
+				%ray = containerRaycast(%s, %e, %masks, %obj);
+				%hitloc = getWords(%ray, 1, 3);
+
+				if (!isObject(getWord(%ray, 0))) {
+					return;
+				}
+
+				initContainerBoxSearch(%hitloc, "0.5 0.5 0.5", $TypeMasks::StaticObjectType | $TypeMasks::ItemObjectType);
+				%next = containerSearchNext();
+				// talk("found? " @ %next);
+				if (isObject(%next)) {
+					if (!addToChips(%next, %obj.addToChips, %cl)) {
+						return parent::onTrigger(%this, %obj, %trig, %val);
+					}
+					%obj.addToChips = "";
+					bottomprintChipInfo(%obj);
+					return;
+				}
 			}
 
 			//do not premature return if no deck or cards are out
@@ -230,39 +288,6 @@ package PlayCards {
 		}
 		parent::serverCmdSuperShiftBrick(%cl, %x, %y, %z);
 	}
-
-	// function serverCmdPlantBrick(%cl) {
-	// 	if (isObject(%pl = %cl.player) && %pl.isSelectingCard) {
-	// 		%currentCard = %pl.currentCard;
-	// 		if (!%pl.placeCurrentCard()) {
-	// 			%cl.centerprint("Invalid location to place!");
-	// 			%cl.schedule(50, centerprint, "\c3Invalid location to place!");
-	// 			%cl.schedule(100, centerprint, "Invalid location to place!");
-	// 			%cl.schedule(150, centerprint, "\c3Invalid location to place!");
-	// 			%cl.schedule(200, centerprint, "Invalid location to place!", 2);
-	// 			return;
-	// 		}
-	// 		%pl.stopCardSelect();
-	// 		serverCmdUnuseTool(%cl);
-	// 		return;
-	// 	}
-	// 	parent::serverCmdPlantBrick(%cl);
-	// }
-
-	// function serverCmdLight(%cl) {
-	// 	if (isObject(%pl = %cl.player) && %pl.isCardsVisible) {
-	// 		if (%pl.isSelectingCard) {
-	// 			%pl.stopCardSelect();
-	// 			if (%pl.unUsedTool) {
-	// 				serverCmdUnuseTool(%cl);
-	// 			}
-	// 		} else {
-	// 			%pl.startCardSelect();
-	// 		}
-	// 		return;
-	// 	}
-	// 	parent::serverCmdLight(%cl);
-	// }
 
 	function serverCmdShiftBrick(%cl, %x, %y, %z) {
 		if (isObject(%pl = %cl.player) && %pl.isSelectingCard) {
@@ -308,37 +333,6 @@ package PlayCards {
 		}
 		parent::serverCmdLight(%cl);
 	}
-
-	// function serverCmdUseSprayCan(%cl, %colorID) {
-	// 	if (isObject(%pl = %cl.player) && %pl.isSelectingCard) {
-	// 		%pl.placeFaceDown = !%pl.placeFaceDown;
-	// 		bottomprintCardInfo(%pl);
-	// 		return;
-	// 	}
-	// 	parent::serverCmdUseSprayCan(%cl, %colorID);
-	// }
-
-	// function serverCmdUseFxCan(%cl, %colorID) {
-	// 	if (isObject(%pl = %cl.player) && %pl.isSelectingCard) {
-	// 		%pl.placeFaceDown = !%pl.placeFaceDown;
-	// 		bottomprintCardInfo(%pl);
-	// 		return;
-	// 	}
-	// 	parent::serverCmdUseFxCan(%cl, %colorID);
-	// }
-
-	// function serverCmdUseTool(%cl, %slot) {
-	// 	%cl.player.unUsedTool = 0;
-	// 	parent::serverCmdUseTool(%cl, %slot);
-	// }
-
-	// function serverCmdUnuseTool(%cl) {
-	// 	// if (isObject(%pl = %cl.player) && %pl.isSelectingCard) {
-	// 	// 	%pl.unUsedTool = 1;
-	// 	// 	return;
-	// 	// }
-	// 	parent::serverCmdUnuseTool(%cl);
-	// }
 };
 activatePackage(PlayCards);
 

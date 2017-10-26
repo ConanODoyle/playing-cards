@@ -1,6 +1,13 @@
-package RemoveDecksOnDeath {
+package RemoveCardsAndChipsOnDeath {
 	function Armor::onRemove(%this, %obj) {
 		%obj.clearCardData();
+		if (isObject(%obj.deckShuffle)) {
+			%obj.deckShuffle.delete();
+		}
+
+		if (isObject(%obj.chipDisplayBrick)) {
+			%obj.chipDisplayBrick.clearChips(%obj.client);
+		}
 
 		return parent::onRemove(%this, %obj);
 	}
@@ -19,7 +26,7 @@ package RemoveDecksOnDeath {
 		return parent::onDeath(%cl, %a, %b, %c, %d);
 	}
 };
-activatePackage(RemoveDecksOnDeath);
+activatePackage(RemoveCardsAndChipsOnDeath);
 
 
 ////////////////////
@@ -109,8 +116,8 @@ function Player::displayCards(%pl) {
 		};
 		%pl.cardHolder.kill();
 		%pl.cardHolder.setScale("1 1 1");
-		%pl.mountObject(%pl.cardHolder, 7);
 	}
+	%pl.mountObject(%pl.cardHolder, 7);
 
 	%cl = %pl.client;
 
@@ -192,8 +199,8 @@ function Player::displayDeck(%pl) {
 		};
 		%pl.deckShuffle.kill();
 		%pl.deckShuffle.setScale("1 1 1");
-		%pl.mountObject(%pl.deckShuffle, 7);
 	}
+	%pl.mountObject(%pl.deckShuffle, 7);
 	%cl = %pl.client;
 
 	%pl.playThread(1, armReadyBoth);
@@ -213,13 +220,40 @@ function Player::displayDeck(%pl) {
 	%pl.deckShuffle.setNodeColor($LHand[%cl.lhand], %cl.lhandColor);
 	%pl.deckShuffle.setNodeColor($RHand[%cl.rhand], %cl.rhandcolor);
 
-	%pl.deckShuffle.schedule(getRandom(1, 3) * 1000, playThread, 0, shuffle);
-	%pl.deckShuffle.schedule(getRandom(5, 6) * 1000, playThread, 0, root);
+	%pl.shuffleAnim();
 }
 
 function Player::hideDeck(%pl) {
 	%pl.deckShuffle.hideNode("ALL");
-	%pl.applyBodyParts();
-	%pl.applyBodyColors();
+	%pl.client.applyBodyParts();
+	%pl.client.applyBodyColors();
 	%pl.isDeckVisible = 0;
+	%pl.shuffleAnim();
+}
+
+function Player::shuffleAnim(%pl) {
+	cancel(%pl.shuffleAnimSched);
+	
+	if (!%pl.isDeckVisible) {
+		%pl.deckShuffle.playThread(0, root);
+		return;
+	}
+
+	%doShuffle = getRandom();
+	%shuffleStart = getRandom(0, 25);
+	%shuffleEnd = getRandom(4, 5);
+
+	if (%doShuffle < 0.1) {
+		%pl.deckShuffle.hideNode(deck1);
+		%pl.deckShuffle.unHideNode(trapCard);
+		%pl.deckShuffle.playthread(0, showCard);
+
+		%pl.deckShuffle.schedule(1000, unHideNode, deck1);
+		%pl.deckShuffle.schedule(1000, hideNode, trapCard);
+	} else {
+		%pl.deckShuffle.schedule(%shuffleStart * 1000, playThread, 0, shuffle);
+		%pl.deckShuffle.schedule((%shuffleStart + %shuffleEnd) * 1000, playThread, 0, root);
+	}
+
+	%pl.shuffleAnimSched = %pl.schedule(30000, shuffleAnim);
 }

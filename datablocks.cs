@@ -206,6 +206,10 @@ datablock StaticShapeData(CardShape) {
 	shapeFile = "./tex/cards.dts";
 };
 
+datablock StaticShapeData(ChipShape) {
+	shapeFile = "./tex/chip.dts";
+};
+
 datablock ItemData(CardsOutItem : HammerItem) {
 	shapeFile = "./tex/singleCard.dts";
 	image = CardsOutImage;
@@ -272,3 +276,38 @@ function cardDisplay(%pl, %card) {
 	%pl.unHideNode("card");
 	%pl.unHideNode(%card);
 }
+
+
+datablock ItemData(ChipItem : HammerItem) {
+	shapeFile = "./tex/chip.dts";
+	image = ChipImage;
+
+	uiName = "Chips";
+	iconName = "Add-Ons/Item_PlayingCards/chipIcon";
+
+	colorShiftColor = "1 0 0 1";
+};
+
+datablock ShapeBaseImageData(ChipImage : printGunImage) {
+	shapeFile = "./tex/chip.dts";
+
+	rotation = eulerToMatrix("0 90 0");
+	offset = "-0.04 0.05 0.08";
+	eyeOffset = "";
+  
+	item = ChipItem;
+
+	projectile = "";
+	colorShiftColor = "1 0 0 1";
+  
+	stateName[0] = "Activate";
+	stateTimeout[0] = 0.1;
+	stateTransitionOnTimeout[0] = "Ready";
+	stateSequence[0] = "";
+
+	stateName[1] = "Ready";
+	stateTransitionOnTimeout[1] = "";
+	stateTransitionOnTriggerDown[1] = "";
+	stateTransitionOnTriggerUp[1] = "";
+	stateSequence[1] = "";
+};

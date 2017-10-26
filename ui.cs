@@ -58,3 +58,28 @@ function getBottomprintDeckUI(%pl) {
 
 	return %line1 @ %line2 @ %line3;
 }
+
+function bottomprintChipInfo(%pl) {
+	%cl = %pl.client;
+	if (!isObject(%cl)) {
+		return;
+	}
+
+	if (%pl.isChipsVisible && %pl.bet> 0) {
+		%line0 = "<just:left>\c3Left Click\c6: Place down bet<just:right>\c3Right Click\c6: Cancel <br>";
+		%line1 = "<just:center>\c6Current bet: \c3" @ %pl.bet @ " <br>";
+		%line2 = "<just:center>\c6Total Points: \c2" @ %cl.score;
+	} else if (%pl.isChipsVisible) {
+		if (%pl.canPickupChips) {
+			%line0 = "<just:right>\c3Right Click\c6: Pick up chips <br>";
+		}
+
+		if (%pl.addToChips !$= "") {
+			%line0 = "<just:left>\c3Left Click\c6: " @ %pl.addToChips @ " to a bet" @ %line0;
+		}
+		%line1 = "<just:center>\c3/bet #\c6 to prepare a bet <br>";
+		%line2 = "<just:center>\c6Total Points: \c2" @ %cl.score;
+	}
+
+	%cl.bottomprint(%line0 @ %line1 @ %line2, -1, 1);
+}
