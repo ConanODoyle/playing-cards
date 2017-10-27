@@ -83,3 +83,19 @@ function bottomprintChipInfo(%pl) {
 
 	%cl.bottomprint(%line0 @ %line1 @ %line2, -1, 1);
 }
+
+function serverCmdCardsHelp(%cl) {
+	messageClient(%cl, '', "\c3/clearAllCards \c6- Removes all placed cards");
+	messageClient(%cl, '', "\c3/clearAllCardData \c6- Removes all placed cards and any held cards");
+	messageClient(%cl, '', "\c3/bet # \c6- Prepares a bet, rounded down");
+	messageClient(%cl, '', "\c3/addToChips # \c6- Prepares a payout, rounded down, adds to the chip set you click");
+	messageClient(%cl, '', "\c7            Automatically returns it to the owner's pile");
+	messageClient(%cl, '', "\c3/multiplyChips # \c6- Prepares a multiplier payout, adds to the chip set you click");
+	messageClient(%cl, '', "\c7            Automatically returns it to the owner's pile, 0 is a valid number");
+	messageClient(%cl, '', "\c3/toggleChipPickup $ \c6- Toggles if chips can be picked up by non-super-admins");
+	messageClient(%cl, '', "\c7            Include a name to only toggle for one person, none to toggle everyone");
+}
+
+function serverCmdCardHelp(%cl) {
+	serverCmdCardsHelp(%cl);
+}

@@ -430,3 +430,28 @@ function deleteAllCards() {
 		CardShapes.delete();
 	}
 }
+
+function serverCmdClearAllCards(%cl) {
+	if (!%cl.isSuperAdmin) {
+		return;
+	}
+
+	deleteAllCards();
+	messageClient(%cl, '', "\c6All cards deleted");
+}
+
+function serverCmdClearAllCardData(%cl) {
+	if (!%cl.isSuperAdmin) {
+		return;
+	}
+
+	deleteAllCards();
+
+	for (%i = 0; %i < ClientGroup.getCount(); %i++) {
+		if (isObject(%pl = ClientGroup.getObject(%i).player)) {
+			%pl.clearCardData();
+		}
+	}
+
+	messageClient(%cl, '', "\c6All cards and held cards deleted");
+}

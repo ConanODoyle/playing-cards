@@ -189,7 +189,11 @@ function Player::placeChips(%pl, %value, %loc) {
 	}
 
 	if (%count > 0) {
-		%group = new ScriptGroup(ChipShapes) { center = %loc; value = %value; };
+		%group = new ScriptGroup(ChipShapes) { 
+			center = %loc;
+			value = %value;
+			sourceObject = %pl;
+		};
 
 		for (%i = 0; %i < %count; %i++) {
 			%group.add(%chip[%i]);
@@ -216,7 +220,7 @@ function ChipImage::onUnmount(%this, %obj, %slot) {
 }
 
 function ChipImage::onMount(%this, %obj, %slot) {
-	%obj.canPickupChips = $canPickUpChips || %obj.client.isSuperAdmin;
+	%obj.canPickupChips = $canPickUpChips || %obj.permToPickUpChips;
 	%obj.isChipsVisible = 1;
 	bottomprintChipInfo(%obj);
 }
@@ -254,11 +258,14 @@ function addToChips(%chip, %value, %cl) {
 	%origValue = %g.value;
 	%type = getWord(%value, 0);
 	%value = getWord(%value, 1);
+	%so = %g.sourceObject;
 
 	if (%type $= "ADD") {
+		%add = " + " @ %value;
 		%value = %origValue + %value;
 	} else if (%type $= "MULTIPLY") {
-		%value = %origValue * %value;
+		%add = " x " @ %value;
+		%value = mFloor(%origValue * %value);
 	}
 
 
@@ -266,7 +273,21 @@ function addToChips(%chip, %value, %cl) {
 	%g.chainDeleteAll();
 	%g.delete();
 
-	%cl.player.placeChips(%value, %loc);
+	if (%value <= 0) {
+		return;
+	}
+
+	if (!isObject(%so)) {
+		%cl.player.placeChips(%value, %loc);
+	} else {
+		%so.client.score += %value;
+		messageClient(%cl, '', "\c3" @ %so.client.name @ "\c6 received \c2" @ %value @ " \c6points (" @ %origValue @ %add @ ")");
+		messageClient(%so.client, '', "\c6You received \c2" @ %value @ " \c6points (" @ %origValue @ %add @ ")");
+
+		if (isObject(%so.chipDisplayBrick)) {
+			%so.chipDisplayBrick.createChips(%so.client);
+		}
+	}
 }
 
 
@@ -326,3 +347,46 @@ function serverCmdMultiplyChips(%cl, %val) {
 
 	bottomprintChipInfo(%pl);
 }
+
+function serverCmdToggleChipPickup(%cl, %target1, %target2, %target3) {
+	if (!%cl.isSuperAdmin) {
+		return;
+	}
+
+	%target = trim(%target1 SPC %target2 SPC %target3);
+
+	if (%target $= "") {
+		$canPickUpChips = !$canPickUpChips;
+
+		for (%i = 0; %i < ClientGroup.getCount(); %i++) {
+			%pl = ClientGroup.getObject(%i).player;
+			if (%pl.isChipsVisible) {
+				%pl.canPickupChips = $canPickUpChips || %pl.permToPickUpChips;
+				bottomprintChipInfo(%pl);
+			}	
+		}
+
+		messageAll('', "\c6Chip pickup has been turned " @ ($canPickUpChips ? "\c2ON" : "\c0OFF"));
+	} else {
+		%t = findClientByName(%target);
+		if (!isObject(%t)) {
+			messageClient(%cl, '', "Cannot find client with name " @ %target @ "!");
+			return;
+		} else if (!isObject(%t.player)) {
+			messageClient(%cl, '', %t.name @ " does not have a player!");
+			return;
+		} else {
+			%pl = %t.player;
+			%pl.permToPickUpChips = !%pl.permToPickUpChips;
+
+			messageClient(%cl, '', "\c6Chip pickup for \c3" @ %t.name @ "\c6 has been turned " @ (%pl.permToPickUpChips ? "\c2ON" : "\c0OFF"));
+			messageClient(%t, '', "\c6You now " @ (%pl.permToPickUpChips ? "\c2can\c6" : "\c0cannot\c6") @ " pick up chips");
+
+			if (%pl.isChipsVisible) {
+				%pl.canPickupChips = %pl.permToPickUpChips;
+				bottomprintChipInfo(%pl);
+			}
+		}
+	}
+}
+
