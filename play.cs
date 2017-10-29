@@ -155,8 +155,17 @@ package PlayCards {
 				%obj.bet = "";
 				bottomprintChipInfo(%obj);
 				return;
-			} else if (%obj.canPickUpChips && getSimTime() - %obj.lastChipPickupTime > 500) {
-				%e = vectorAdd(vectorScale(%obj.getEyeVector(), 5), %s);
+			} else if (%obj.addToChips !$= "" && %obj.isChipsVisible) {
+				%obj.addToChips = "";
+				bottomprintChipInfo(%obj);
+				return;
+			} else if (%obj.mergeChips !$= "" && %obj.isChipsVisible) {
+				%obj.mergeChips = "";
+				%obj.mergeMultiple = "";
+				bottomprintChipInfo(%obj);
+				return;
+			} else if (%obj.canPickUpChips && getSimTime() - %obj.lastChipPickupTime > 200) {
+				%e = vectorAdd(vectorScale(%obj.getEyeVector(), 8), %s);
 				%ray = containerRaycast(%s, %e, %masks, %obj);
 				%hitloc = getWords(%ray, 1, 3);
 
@@ -231,12 +240,17 @@ package PlayCards {
 				%obj.client.score -= %obj.bet;
 				%obj.placeChips(%obj.bet, %hitloc);
 				%obj.bet = "";
+
+				initContainerBoxSearch(%hitloc, "0.5 0.5 0.5", $TypeMasks::StaticObjectType | $TypeMasks::ItemObjectType);
+				%next = containerSearchNext();
+
+				mergeNearbyChips(%next, 0, %hitloc, 0.2);
 				bottomprintChipInfo(%obj);
 
 
 				return;
-			} else if (%obj.addToChips !$= "") {
-				%e = vectorAdd(vectorScale(%obj.getEyeVector(), 5), %s);
+			} else if (%obj.addToChips !$= "" && %obj.isChipsVisible) {
+				%e = vectorAdd(vectorScale(%obj.getEyeVector(), 8), %s);
 				%ray = containerRaycast(%s, %e, %masks, %obj);
 				%hitloc = getWords(%ray, 1, 3);
 
@@ -251,9 +265,37 @@ package PlayCards {
 					if (!addToChips(%next, %obj.addToChips, %cl)) {
 						return parent::onTrigger(%this, %obj, %trig, %val);
 					}
-					%obj.addToChips = "";
 					bottomprintChipInfo(%obj);
 					return;
+				}
+			} else if (%obj.mergeChips && %obj.isChipsVisible) {
+				%e = vectorAdd(vectorScale(%obj.getEyeVector(), 8), %s);
+				%ray = containerRaycast(%s, %e, %masks, %obj);
+				%hitloc = getWords(%ray, 1, 3);
+
+				if (!isObject(getWord(%ray, 0))) {
+					return;
+				}
+
+				if (%obj.mergeRadius <= 0) {
+					// talk("default");
+					initContainerBoxSearch(%hitloc, "0.5 0.5 0.5", $TypeMasks::StaticObjectType);	
+				} else {
+					// talk("radius");
+					%zone = %obj.mergeRadius SPC %obj.mergeRadius SPC %obj.mergeRadius;
+					initContainerBoxSearch(%hitloc, %zone, $TypeMasks::StaticObjectType);
+				}
+
+				%next = containerSearchNext();
+				// talk("found: " @ %next);
+				while (isObject(%next)) {
+					if (isObject(%next) && isObject(%next.getGroup()) && %next.getGroup().value > 0) {
+						mergeNearbyChips(%next, %obj.mergeMultiple, %hitloc, %obj.mergeRadius);
+						bottomprintChipInfo(%obj);
+						return;
+					} else {
+						%next = containerSearchNext();
+					}
 				}
 			}
 
@@ -391,7 +433,7 @@ function Player::placeCurrentCard(%pl) {
 // }
 
 function placeCard(%pl, %pos, %card, %down) {
-	%leftVec = vectorCross(%pl.getUpVector(), %pl.getForwardVector());
+	%leftVec = vectorCross(%pl.getUpVector(),%pl.getForwardVector());
 	
 	%x = getWord(%pl.getForwardVector(), 0);
 	%zRot = mACos(vectorDot(%leftVec, "1 0 0")) * (%x/mAbs(%x));

@@ -1,3 +1,10 @@
+package Chips {
+	function fxDTSBrick::onRemove(%b) {
+		%b.clearChips();
+		parent::onRemove(%b);
+	}
+};
+activatePackage(Chips);
 
 $ChipTypeCount = 5;
 $ChipType0 = "0.8 0.8 0.8 1";
@@ -70,6 +77,10 @@ function fxDTSBrick::createChips(%b, %cl) {
 	}
 
 	%value = %cl.score;
+	if (%value <= 0) {
+		%b.clearChips();
+		return;
+	}
 	%loc = vectorAdd(%b.getPosition(), "0 0 " @ %b.getDatablock().brickSizeZ * 0.1);
 
 	%chipVector = getChipCounts(%value);
@@ -193,6 +204,7 @@ function Player::placeChips(%pl, %value, %loc) {
 			center = %loc;
 			value = %value;
 			sourceObject = %pl;
+			sourceClient = %pl.client;
 		};
 
 		for (%i = 0; %i < %count; %i++) {
@@ -243,6 +255,7 @@ function pickUpChips(%chip, %cl) {
 	if (isObject(%cl.player.chipDisplayBrick)) {
 		%cl.player.chipDisplayBrick.createChips(%cl);
 	}
+	%cl.player.emote(winStarProjectile, 1);
 
 	%g.chainDeleteAll();
 	%g.delete();
@@ -258,7 +271,7 @@ function addToChips(%chip, %value, %cl) {
 	%origValue = %g.value;
 	%type = getWord(%value, 0);
 	%value = getWord(%value, 1);
-	%so = %g.sourceObject;
+	%so = %g.sourceClient;
 
 	if (%type $= "ADD") {
 		%add = " + " @ %value;
@@ -280,13 +293,86 @@ function addToChips(%chip, %value, %cl) {
 	if (!isObject(%so)) {
 		%cl.player.placeChips(%value, %loc);
 	} else {
-		%so.client.score += %value;
-		messageClient(%cl, '', "\c3" @ %so.client.name @ "\c6 received \c2" @ %value @ " \c6points (" @ %origValue @ %add @ ")");
-		messageClient(%so.client, '', "\c6You received \c2" @ %value @ " \c6points (" @ %origValue @ %add @ ")");
+		%so.score += %value;
+		messageClient(%cl, '', "\c3" @ %so.name @ "\c6 received \c2" @ %value @ " \c6points (" @ %origValue @ %add @ ")");
+		messageClient(%so, '', "\c6You received \c2" @ %value @ " \c6points (" @ %origValue @ %add @ ")");
 
-		if (isObject(%so.chipDisplayBrick)) {
-			%so.chipDisplayBrick.createChips(%so.client);
+		if (isObject(%so.player.chipDisplayBrick)) {
+			%so.player.chipDisplayBrick.createChips(%so);
 		}
+	}
+}
+
+function mergeNearbyChips(%startChip, %mergeMultiple, %loc, %radius) {
+	// talk(" ");
+	// talk("StartChip: " @ %startChip);
+	%og = %startChip.getGroup();
+	%so = %og.sourceClient;
+	// %value = 0;
+
+	// %og.chainDeleteAll();
+	// %og.delete();
+
+	if (%radius > 0) {
+		%bounds = %radius SPC %radius SPC %radius;
+	} else {
+		%bounds = "1 1 1";
+	}
+	initContainerBoxSearch(%loc, %bounds, $TypeMasks::StaticObjectType);
+	%next = containerSearchNext();
+
+	// talk("Search Loc: " @ %loc);
+	%count = 0;
+	while (isObject(%next) && %count < 100) {
+		// talk("obj" @ %count @ ": " @ %next SPC %next.getClassName());
+		
+		if (!isObject(%next.getGroup()) || %next.getGroup().value <= 0) {
+			// talk("    No value, skipping");
+			%next = containerSearchNext();
+			continue;
+		}
+		// talk("    Client: " @ %next.getGroup().sourceClient);
+
+		if (%next.getGroup().sourceClient == %so && %next.getGroup() != %og) {
+			%singleSourceFound++;
+		}
+
+		%found[%count] = %next.getGroup();
+		%next = containerSearchNext();
+		%count++;
+	}
+
+	%addedCount = 1;
+	if (!%mergeMultiple) { //(%singleSourceFound > 1) {
+		for (%i = 0; %i < %count; %i++) {
+			if (isObject(%found[%i]) && %found[%i].sourceClient == %so) {
+				%found[%i].chainDeleteAll();
+				%value += %found[%i].value;
+				%found[%i].delete();
+			}
+		}
+	} else {
+		for (%i = 0; %i < %count; %i++) {
+			if (isObject(%found[%i])) {
+				%found[%i].chainDeleteAll();
+				%value += %found[%i].value;
+				%found[%i].delete();
+			}
+		}
+	}
+
+	if (!%mergeMultiple) { //(%singleSourceFound > 1) {
+		if (!isObject(%so.player)) {
+			%temp = new ScriptObject() { client = %so; };
+		} else {
+			%temp = %so.player;
+		}
+		Player::placeChips(%temp, %value, %loc);
+		if (!isObject(%so.player)) {
+			%temp.delete();
+		}
+	} else {
+		Player::placeChips("", %value, %loc);
 	}
 }
 
@@ -316,7 +402,7 @@ function serverCmdBet(%cl, %val) {
 }
 
 function serverCmdAddToChips(%cl, %val) {
-	if (!%cl.isSuperAdmin) {
+	if (!%cl.isAdmin) {
 		return;
 	}
 
@@ -333,7 +419,7 @@ function serverCmdAddToChips(%cl, %val) {
 }
 
 function serverCmdMultiplyChips(%cl, %val) {
-	if (!%cl.isSuperAdmin) {
+	if (!%cl.isAdmin) {
 		return;
 	}
 
@@ -349,7 +435,7 @@ function serverCmdMultiplyChips(%cl, %val) {
 }
 
 function serverCmdToggleChipPickup(%cl, %target1, %target2, %target3) {
-	if (!%cl.isSuperAdmin) {
+	if (!%cl.isAdmin) {
 		return;
 	}
 
@@ -390,3 +476,26 @@ function serverCmdToggleChipPickup(%cl, %target1, %target2, %target3) {
 	}
 }
 
+function serverCmdMergeChips(%cl, %radius) {
+	if (!%cl.isSuperAdmin || !isObject(%cl.player)) {
+		return;
+	}
+
+	%cl.player.mergeChips = 1;
+	%cl.player.mergeMultiple = 1;
+
+	if (%radius <= 0) {
+		%radius = 0;
+		%cl.player.mergeMultiple = 0;
+	} else if (%radius > 15) {
+		%radius = 15;
+	}
+
+	%cl.player.mergeRadius = %radius * 2;
+
+	messageClient(%cl, '', "\c6Chip merging radius set to " @ %radius @ " (" @ %radius / 0.5 @ " studs)");
+
+	if (%cl.player.isChipsVisible) {
+		bottomprintChipInfo(%cl.player);
+	}
+}

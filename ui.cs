@@ -75,7 +75,12 @@ function bottomprintChipInfo(%pl) {
 		}
 
 		if (%pl.addToChips !$= "") {
+			%line0 = "<just:right>\c3Right Click\c6: Cancel <br>";
 			%line0 = "<just:left>\c3Left Click\c6: " @ %pl.addToChips @ " to a bet" @ %line0;
+		} else if (%pl.mergeChips) {
+			%line0 = "<just:right>\c3Right Click\c6: Cancel <br>";
+			%radius = %pl.mergeRadius > 0 ? "(Radius: " @ %pl.mergeRadius @ ")" : "";
+			%line0 = "<just:left>\c3Left Click\c6: Merge overlapping chips " @ %radius @ %line0;
 		}
 		%line1 = "<just:center>\c3/bet #\c6 to prepare a bet <br>";
 		%line2 = "<just:center>\c6Total Points: \c2" @ %cl.score;
@@ -92,10 +97,13 @@ function serverCmdCardsHelp(%cl) {
 	messageClient(%cl, '', "\c7            Automatically returns it to the owner's pile");
 	messageClient(%cl, '', "\c3/multiplyChips # \c6- Prepares a multiplier payout, adds to the chip set you click");
 	messageClient(%cl, '', "\c7            Automatically returns it to the owner's pile, 0 is a valid number");
-	messageClient(%cl, '', "\c3/toggleChipPickup $ \c6- Toggles if chips can be picked up by non-super-admins");
+	messageClient(%cl, '', "\c3/toggleChipPickup [name] \c6- Toggles if chips can be picked up");
 	messageClient(%cl, '', "\c7            Include a name to only toggle for one person, none to toggle everyone");
+	messageClient(%cl, '', "\c3/mergeChips # \c6- Turns on chip merging using the chip item, default radius is 1 stud");
+	messageClient(%cl, '', "\c7            Include a number to set a radius (ie, merge all chips on a table)");
 }
 
 function serverCmdCardHelp(%cl) {
 	serverCmdCardsHelp(%cl);
 }
+

@@ -14,29 +14,6 @@ activatePackage(DealCards);
 ////////////////////
 
 
-function Player::placeDeckCard(%pl, %down) {
-	if (!isObject(%pl.deckBrick.deck)) {
-		return;
-	}
-
-	%deck = %pl.deckBrick.deck;
-
-	if (%deck.numCards <= 0) {
-		messageClient(%pl.client, '', "Your deck is out of cards!");
-		return;
-	}
-
-	%eye = %pl.getEyeVector();
-	%start = %pl.getEyeTransform();
-	%end = vectorAdd(%start, vectorScale(%eye, 5));
-	%ray = containerRaycast(%start, %end, $TypeMasks::fxBrickObjectType | $TypeMasks::TerrainObjectType | $TypeMasks::StaticObjectType | $TypeMasks::StaticShapeObjectType);
-	%hitLoc = getWords(%ray, 1, 3);
-	
-	if (%hitLoc !$= "") {
-		placeCard(%pl, %hitloc, %deck.removeCard(0), %down);
-	}
-}
-
 function Player::dealDeckCard(%pl) {
 	if (!isObject(%pl.deckBrick.deck)) {
 		return;
@@ -192,11 +169,16 @@ function Player::placeDeckCard(%pl) {
 	%masks = $TypeMasks::fxBrickObjectType | $TypeMasks::StaticObjectType | $TypeMasks::TerrainObjectType | $TypeMasks::StaticShapeObjectType;
 	%ray = containerRaycast(%s, %e, %masks, %pl);
 	%hitloc = getWords(%ray, 1, 3);
+	%hit = getWord(%ray, 0);
 
 	if (%hitloc $= "") {
 		return 0;
 	} else if (getWords(%ray, 4, 6) !$= "0 0 1") {
 		return 0;
+	} else if (%hit.getClassName() $= "Player" && isObject(%hit.client)) {
+		%hit.addCard(%deck.removeCard(0));
+		messageClient(%pl.client, '', "\c6You gave \c3" @ %hit.client.name @ "\c6 a card");
+		return;
 	}
 
 	initContainerBoxSearch(%hitloc, 0.05, $TypeMasks::StaticObjectType | $TypeMasks::ItemObjectType);
