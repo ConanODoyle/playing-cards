@@ -92,6 +92,7 @@ function bottomprintChipInfo(%pl) {
 function serverCmdCardsHelp(%cl) {
 	messageClient(%cl, '', "\c3/clearAllCards \c6- Removes all placed cards");
 	messageClient(%cl, '', "\c3/clearAllCardData \c6- Removes all placed cards and any held cards");
+	messageClient(%cl, '', "\c3/clearAllPlacedChips \c6- Removes all placed chips");
 	messageClient(%cl, '', "\c3/bet # \c6- Prepares a bet, rounded down");
 	messageClient(%cl, '', "\c3/addToChips # \c6- Prepares a payout, rounded down, adds to the chip set you click");
 	messageClient(%cl, '', "\c7            Automatically returns it to the owner's pile");
@@ -107,3 +108,12 @@ function serverCmdCardHelp(%cl) {
 	serverCmdCardsHelp(%cl);
 }
 
+function serverCmdQueueHelp(%cl) {
+	messageClient(%cl, '', "\c3/JoinBlackjackQueue \c6- Joins the Blackjack queue");
+	messageClient(%cl, '', "\c3/LeaveBlackjackQueue \c6- Leaves the Blackjack queue");
+	messageClient(%cl, '', "\c3/ListBlackjackQueue \c6- Lists everyone in the Blackjack Queue");
+	messageClient(%cl, '', "\c3/LeaveGame \c6- Respawns you (aka exit the current game, if you are in one)");
+	messageClient(%cl, '', "\c3/PopBlackjackQueue \c6- Spawns the next person in the queue at the blackjack spawn");
+	messageClient(%cl, '', "\c7            If it cannot find the blackjack spawn, it uses your player.");
+	messageClient(%cl, '', "\c7            Spawned players have no card item, but have the chip item.");
+}

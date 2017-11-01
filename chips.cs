@@ -499,3 +499,28 @@ function serverCmdMergeChips(%cl, %radius) {
 		bottomprintChipInfo(%cl.player);
 	}
 }
+
+function serverCmdClearAllPlacedChips(%cl) {
+	if (!%cl.isAdmin) {
+		return;
+	}
+
+	%count = 0;
+	while(isObject(ChipShapes)) {
+		if (isObject(ChipShapes.getGroup()) && ChipShapes.getGroup().value > 0) {
+			%g = ChipShapes.getGroup();
+		}
+		ChipShapes.delete();
+		%count++;
+
+		if (isObject(%g)) {
+			%count += %g.getCount();
+			%g.chainDeleteAll();
+			%g.delete();
+		}
+	}
+	if (%count != 1) {
+		%plural = "s";
+	}
+	messageClient(%cl, '', "All chips cleared (" @ %count @ " chip" @ %plural @ ")");
+}
