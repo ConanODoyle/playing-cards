@@ -403,9 +403,10 @@ function Player::placeCurrentCard(%pl) {
 	%ray = containerRaycast(%s, %e, %masks, %pl);
 	%hitloc = getWords(%ray, 1, 3);
 
+	%angle = mACos(vectorDot(vectorNormalize(getWords(%ray, 4, 6)), "0 0 1"));
 	if (%hitloc $= "") {
 		return 0;
-	} else if (getWords(%ray, 4, 6) !$= "0 0 1") {
+	} else if (%angle > 0.05) {
 		return 0;
 	}
 
